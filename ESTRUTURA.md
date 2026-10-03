@@ -57,8 +57,11 @@ backend/
 │
 ├── database/
 │   ├── migrations/               ✅          "plantas" das tabelas (criar products, sales...)
-│   ├── seeders/                  ✅          massa de dados de exemplo (30 produtos)
+│   ├── seeders/                  ✅          massa de dados de exemplo
+│   │   ├── DatabaseSeeder.php    ✅ passo 3  o seeder principal: chama os outros
+│   │   └── ProductSeeder.php     ✅ passo 3  31 produtos de mercadinho (2 inativos, 1 sem estoque)
 │   ├── factories/                ✅          fábricas de dados falsos, usadas nos testes
+│   │   └── ProductFactory.php    ✅ passo 3  produto aleatório + variações inactive() e outOfStock()
 │   └── database.sqlite           ✅          o banco em si: um arquivo só (não vai pro Git)
 │
 ├── routes/
@@ -173,3 +176,13 @@ stock                     created_at (= hora da venda)  quantity
 | **Trait `Immutable` em Sale e SaleItem** | Segunda proteção da regra "venda finalizada não muda": qualquer `update` ou `delete` pelo Model dá erro. A primeira proteção é a API não ter rota para isso. |
 | **Enum `PaymentMethod`** | Lista fechada de formas de pagamento num lugar só, sem textos soltos digitados errado. |
 | **Troco gravado na venda** | Daria para recalcular, mas o comprovante deve mostrar exatamente o que foi devolvido no dia. |
+
+## Decisões do passo 3 (dados de exemplo)
+
+| Decisão | Por quê |
+|---|---|
+| **31 produtos fixos e realistas** no `ProductSeeder` | O teste pede massa de dados para testar sem digitar. Nomes de mercado ajudam quem avalia a usar a tela. |
+| **Casos especiais de propósito**: 2 inativos, 1 sem estoque, preços quebrados (R$ 0,75, R$ 4,99) | Quem avalia consegue testar as regras na tela sem precisar mexer no banco. |
+| **`updateOrCreate` pelo código** | Rodar o seeder duas vezes não duplica nada: atualiza o que já existe. |
+| **Seeder ≠ Factory** | Seeder = dados fixos, para pessoas testarem na tela. Factory = dados aleatórios, para os testes automáticos criarem o cenário de que precisam. |
+| **Removido o usuário de teste padrão** do `DatabaseSeeder` | Ainda não há login. Se fizermos o bônus, o operador de exemplo entra aqui. |

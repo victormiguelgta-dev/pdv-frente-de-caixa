@@ -2,24 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
+/*
+| Seeder principal: é o que roda com "php artisan db:seed".
+| Ele só chama os outros seeders, na ordem certa.
+|
+| O usuário de teste que vinha aqui por padrão no Laravel foi removido: por
+| enquanto o sistema não tem login. Se fizermos o bônus de login, o usuário
+| operador de exemplo entra aqui.
+*/
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            ProductSeeder::class,
         ]);
     }
 }

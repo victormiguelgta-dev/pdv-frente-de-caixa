@@ -15,7 +15,7 @@ cd backend
 composer install
 cp .env.example .env
 php artisan key:generate
-php artisan migrate
+php artisan migrate --seed   # cria as tabelas e os produtos de exemplo
 php artisan serve
 ```
 
