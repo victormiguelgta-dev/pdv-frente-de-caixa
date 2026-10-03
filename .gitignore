@@ -1,0 +1,22 @@
+# Arquivos que o Git NUNCA deve enviar para o GitHub.
+# Cada pasta (backend/ e frontend/) também tem o seu próprio .gitignore.
+
+# Segredos: senhas, chaves e configurações de cada máquina.
+# Quem baixar o projeto copia o .env.example (sem segredos) e cria o seu .env.
+.env
+.env.*
+!.env.example
+
+# Dependências: são baixadas com "composer install" e "npm install".
+# Enviar essas pastas deixaria o repositório gigante à toa.
+vendor/
+node_modules/
+
+# Banco de dados local (SQLite). Cada um gera o seu com "php artisan migrate --seed".
+*.sqlite
+
+# Lixo de sistema operacional e de editor.
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
