@@ -28,14 +28,16 @@ e encontra tudo. Cada parte fica na sua pasta e roda de forma independente.
 ```
 backend/
 ├── app/                          ← O CÓDIGO DO SISTEMA (é aqui que mais trabalhamos)
-│   ├── Enums/                    🔜 passo 2  Listas fixas de opções
-│   │   └── PaymentMethod.php                 dinheiro, débito, crédito, pix
+│   ├── Enums/                    ✅ passo 2  Listas fixas de opções
+│   │   └── PaymentMethod.php     ✅          dinheiro, débito, crédito, pix
 │   │
 │   ├── Models/                   ✅          M do MVC: a "despensa", uma classe por tabela
+│   │   ├── Concerns/
+│   │   │   └── Immutable.php     ✅ passo 2  regra "venda finalizada não muda" (usada por Sale e SaleItem)
 │   │   ├── User.php              ✅          operador do caixa (já vem com o Laravel)
-│   │   ├── Product.php           🔜 passo 2  produto
-│   │   ├── Sale.php              🔜 passo 2  venda
-│   │   └── SaleItem.php          🔜 passo 2  item da venda
+│   │   ├── Product.php           ✅ passo 2  produto
+│   │   ├── Sale.php              ✅ passo 2  venda (tem muitos itens)
+│   │   └── SaleItem.php          ✅ passo 2  item da venda ("fotografia" do produto)
 │   │
 │   ├── Services/                 🔜 passo 5  O "COZINHEIRO-CHEFE": as regras de negócio
 │   │   └── SaleService.php                   recalcula total, confere troco, bloqueia
@@ -146,3 +148,28 @@ frontend/src/
 | **CORS só com GET e POST** | Não existe editar nem apagar venda, então não há motivo para liberar PUT/DELETE. |
 | **Erros sempre em JSON** nas rotas `/api` | O front sempre recebe um formato que consegue ler, nunca uma página HTML de erro. |
 | **`.env` fora do Git** e `.env.example` dentro | O `.env` tem a `APP_KEY` (chave secreta). O `.env.example` mostra quais variáveis existem, sem valores secretos. |
+
+## Decisões do passo 2 (banco de dados)
+
+```
+products                  sales                         sale_items
+──────────────            ──────────────────            ──────────────────────
+id                        id  ◄──────────────────────── sale_id
+code (único)              payment_method                product_id ──► products.id
+name                      total_cents                   product_code     ┐
+price_cents               amount_received_cents         product_name     │ "fotografia"
+active                    change_cents                  unit_price_cents ┘
+stock                     created_at (= hora da venda)  quantity
+                                                        subtotal_cents
+```
+
+| Decisão | Por quê |
+|---|---|
+| **Dinheiro em centavos, número inteiro** (`1990` = R$ 19,90) | Computador erra conta com decimal (`0.1 + 0.2 = 0.30000000000000004`). Com inteiro, a conta é sempre exata. |
+| **`sale_items` copia código, nome e preço** | Regra do teste: o preço da venda fica registrado mesmo se o produto mudar depois. |
+| **Produto tem `active`, e não é apagado** | Regra do teste: indisponível não entra em venda nova. Apagar quebraria o histórico das vendas antigas. |
+| **Sem venda "em aberto" no banco** | O carrinho vive na tela. A venda só é gravada já finalizada, então não precisa de coluna de status, e `created_at` é a hora da venda. |
+| **`restrictOnDelete` nas chaves estrangeiras** | O próprio banco impede apagar venda com itens, e produto que já foi vendido. |
+| **Trait `Immutable` em Sale e SaleItem** | Segunda proteção da regra "venda finalizada não muda": qualquer `update` ou `delete` pelo Model dá erro. A primeira proteção é a API não ter rota para isso. |
+| **Enum `PaymentMethod`** | Lista fechada de formas de pagamento num lugar só, sem textos soltos digitados errado. |
+| **Troco gravado na venda** | Daria para recalcular, mas o comprovante deve mostrar exatamente o que foi devolvido no dia. |
