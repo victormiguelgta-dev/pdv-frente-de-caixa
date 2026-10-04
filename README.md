@@ -21,6 +21,15 @@ php artisan serve
 
 A API sobe em `http://localhost:8000`. Para testar, abra `http://localhost:8000/api/products`.
 
+## Testes automáticos
+
+```bash
+cd backend
+php artisan test
+```
+
+São 26 testes cobrindo todas as regras de negócio do enunciado. Rodam num banco em memória, sem mexer nos seus dados.
+
 ## Endpoints da API
 
 | Método | Endereço | O que faz |

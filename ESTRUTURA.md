@@ -70,7 +70,9 @@ backend/
 │   └── web.php                   ✅          só avisa que a API está no ar
 │
 ├── tests/
-│   └── Feature/                  🔜 passo 6  testes automatizados de cada regra do teste
+│   └── Feature/                  ✅ passo 5  testes automatizados de cada regra do teste
+│       ├── SaleTest.php          ✅          20 testes: total, troco, preço registrado, inativo, estoque...
+│       └── ProductSearchTest.php ✅          6 testes: busca por nome, código, inativos escondidos...
 │
 ├── config/                       ✅          configurações (cors.php = quem pode chamar a API)
 ├── bootstrap/app.php             ✅          liga tudo: rotas, middlewares, erros em JSON
@@ -205,3 +207,27 @@ stock                     created_at (= hora da venda)  quantity
 | **Sem rotas de editar/apagar venda** (PUT/DELETE dão 405) | Regra do teste: venda finalizada não muda. |
 | **Fuso horário `America/Sao_Paulo`** | Para "vendas do dia" e a hora do comprovante baterem com o relógio da loja. |
 | **Resources em vez de devolver o Model** | Só sai no JSON o que está listado. Uma coluna nova não vaza sem ninguém perceber. |
+
+## Decisões do passo 5 (testes automáticos)
+
+Rodar: `cd backend && php artisan test`. São **26 testes**, que levam cerca de 1 segundo.
+
+| Regra do enunciado | Testes que provam |
+|---|---|
+| Total e subtotais confiáveis | `calcula_total_e_troco_com_o_preco_do_banco`, `ignora_preco_e_total_enviados_pelo_frontend` |
+| Preço registrado na venda | `preco_da_venda_nao_muda_quando_o_produto_muda_de_preco` |
+| Venda tem 1 ou mais itens | `nao_aceita_venda_sem_itens`, `nao_aceita_quantidade_zero_negativa_ou_quebrada` |
+| Dinheiro: recebido ≥ total, troco = diferença | `recusa_dinheiro_menor_que_o_total`, `aceita_dinheiro_exato_com_troco_zero`, `exige_valor_recebido_no_dinheiro` |
+| Produto indisponível não entra | `recusa_produto_inativo`, `produto_inativo_nao_aparece_na_busca` |
+| Venda finalizada não muda | `api_nao_tem_rota_para_editar_ou_apagar_venda`, `model_bloqueia_alterar_venda_finalizada` |
+| Bônus: estoque | `da_baixa_no_estoque_ao_vender`, `recusa_quantidade_maior_que_o_estoque` |
+| Bônus: histórico do dia | `historico_mostra_so_as_vendas_de_hoje` |
+
+| Decisão | Por quê |
+|---|---|
+| **Testes de Feature** (chamam a API de verdade) | Testam o caminho inteiro (rota → validação → serviço → banco → JSON), do jeito que o frontend usa. |
+| **Nomes dos testes em português, descrevendo a regra** | A lista de testes vira uma documentação das regras. |
+| **Banco em memória e `RefreshDatabase`** | Cada teste começa do zero e não mexe no banco de desenvolvimento. |
+| **Os testes conferem também o que NÃO aconteceu** (nada gravado, estoque intacto) | Uma venda recusada não pode deixar rastro pela metade. |
+| **Removidos os `ExampleTest` do Laravel** | Eram exemplos vazios que não testavam nada do projeto. |
+| **Validado com "sabotagem"** | Quebrei regras de propósito (aceitar inativo, troco +1 centavo) e os testes falharam, como deveriam. |
