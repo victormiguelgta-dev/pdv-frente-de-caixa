@@ -65,7 +65,10 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Fuso do caixa. Padrão do Laravel é UTC; trocamos para o horário de
+    // Brasília para que "vendas do dia" e o horário do comprovante batam com o
+    // relógio da loja (uma venda às 22h não pode cair no dia seguinte).
+    'timezone' => env('APP_TIMEZONE', 'America/Sao_Paulo'),
 
     /*
     |--------------------------------------------------------------------------

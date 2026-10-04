@@ -39,21 +39,22 @@ backend/
 │   │   ├── Sale.php              ✅ passo 2  venda (tem muitos itens)
 │   │   └── SaleItem.php          ✅ passo 2  item da venda ("fotografia" do produto)
 │   │
-│   ├── Services/                 🔜 passo 5  O "COZINHEIRO-CHEFE": as regras de negócio
+│   ├── Services/                 ✅ passo 4  O "COZINHEIRO-CHEFE": as regras de negócio
 │   │   └── SaleService.php                   recalcula total, confere troco, bloqueia
 │   │                                         produto inativo, salva tudo junto
 │   │
 │   └── Http/
 │       ├── Controllers/          ✅          C do MVC: os "garçons", recebem e repassam
-│       │   ├── ProductController.php  🔜 passo 4  busca de produtos
-│       │   └── SaleController.php     🔜 passo 4  criar e consultar venda
+│       │   ├── ProductController.php  ✅ passo 4  busca de produtos
+│       │   └── SaleController.php     ✅ passo 4  criar venda, comprovante, vendas do dia
 │       │
-│       ├── Requests/             🔜 passo 4  O "SEGURANÇA DA PORTA": valida o que chega
+│       ├── Requests/             ✅ passo 4  O "SEGURANÇA DA PORTA": valida o que chega
 │       │   └── StoreSaleRequest.php          ex: "itens é obrigatório", "quantidade ≥ 1"
 │       │
-│       └── Resources/            🔜 passo 4  O "EMPACOTADOR": define o formato do JSON
+│       └── Resources/            ✅ passo 4  O "EMPACOTADOR": define o formato do JSON
 │           ├── ProductResource.php           que a API devolve (o que mostrar e o que
-│           └── SaleResource.php              esconder)
+│           ├── SaleResource.php              esconder)
+│           └── SaleItemResource.php
 │
 ├── database/
 │   ├── migrations/               ✅          "plantas" das tabelas (criar products, sales...)
@@ -186,3 +187,21 @@ stock                     created_at (= hora da venda)  quantity
 | **`updateOrCreate` pelo código** | Rodar o seeder duas vezes não duplica nada: atualiza o que já existe. |
 | **Seeder ≠ Factory** | Seeder = dados fixos, para pessoas testarem na tela. Factory = dados aleatórios, para os testes automáticos criarem o cenário de que precisam. |
 | **Removido o usuário de teste padrão** do `DatabaseSeeder` | Ainda não há login. Se fizermos o bônus, o operador de exemplo entra aqui. |
+
+## Decisões do passo 4 (API e regras de negócio)
+
+| Decisão | Por quê |
+|---|---|
+| **O frontend envia só `product_id` e `quantity`** | Regra principal do teste: o cliente pode mandar qualquer coisa. Preço e total enviados pelo front são descartados (`validated()` só devolve os campos validados). |
+| **Regras no `SaleService`, formato no `StoreSaleRequest`** | O Request confere o formato (tem itens? quantidade inteira?). O Service confere a regra (produto ativo? tem estoque? o dinheiro cobre?). O Controller só repassa. |
+| **`DB::transaction`** | Venda, itens e baixa de estoque são salvos juntos. Se algo falhar, nada fica pela metade. |
+| **`lockForUpdate`** | Dois caixas vendendo o último item ao mesmo tempo: o segundo espera e vê o estoque atualizado. |
+| **Todos os erros de uma vez, com o campo exato** (`items.1.product_id`) | O operador vê tudo o que precisa corrigir, e o front sabe qual linha do carrinho marcar. |
+| **Regras de negócio violadas viram 422** (o mesmo formato da validação) | O front trata todo erro de entrada do mesmo jeito. |
+| **Busca só devolve produtos ativos, no máximo 20** | O inativo nem aparece para o operador (e o Service confere de novo). 20 resultados bastam para a tela. |
+| **Produto sem estoque aparece na busca** | O operador vê que o produto existe, mas a tela pode mostrar "sem estoque". O Service bloqueia a venda. |
+| **`throttle:120,1`** (120 requisições por minuto por IP) | Proteção básica contra abuso. 120 porque a busca roda enquanto o operador digita. |
+| **Erros 404 e 429 em português, sem nomes internos** | O padrão do Laravel exporia o nome da classe (`App\Models\Sale`). |
+| **Sem rotas de editar/apagar venda** (PUT/DELETE dão 405) | Regra do teste: venda finalizada não muda. |
+| **Fuso horário `America/Sao_Paulo`** | Para "vendas do dia" e a hora do comprovante baterem com o relógio da loja. |
+| **Resources em vez de devolver o Model** | Só sai no JSON o que está listado. Uma coluna nova não vaza sem ninguém perceber. |

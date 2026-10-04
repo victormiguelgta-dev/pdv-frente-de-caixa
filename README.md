@@ -19,4 +19,26 @@ php artisan migrate --seed   # cria as tabelas e os produtos de exemplo
 php artisan serve
 ```
 
-A API sobe em `http://localhost:8000`. Para testar: `http://localhost:8000/api/ping`.
+A API sobe em `http://localhost:8000`. Para testar, abra `http://localhost:8000/api/products`.
+
+## Endpoints da API
+
+| Método | Endereço | O que faz |
+|---|---|---|
+| GET | `/api/products?search=arroz` | busca produtos disponíveis por nome ou código (máx. 20) |
+| POST | `/api/sales` | finaliza uma venda |
+| GET | `/api/sales/{id}` | comprovante de uma venda |
+| GET | `/api/sales` | vendas do dia |
+
+Exemplo de venda (o frontend envia só produto e quantidade; preços e total são calculados no backend):
+
+```json
+POST /api/sales
+{
+  "items": [{ "product_id": 1, "quantity": 2 }],
+  "payment_method": "cash",
+  "amount_received_cents": 6000
+}
+```
+
+Formas de pagamento: `cash` (dinheiro), `debit`, `credit`, `pix`. Valores sempre em centavos.
