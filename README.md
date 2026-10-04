@@ -4,9 +4,9 @@ Frente de caixa simples: o operador busca produtos, monta o carrinho, finaliza a
 (com cálculo de troco no dinheiro) e consulta o comprovante.
 
 - **backend/**: API em Laravel 13 (PHP 8.3), banco SQLite
-- **frontend/**: React + TypeScript (em construção)
+- **frontend/**: React 19 + TypeScript + Vite
 
-> README em construção. A versão final terá: como rodar, decisões tomadas e testes.
+O guia completo das pastas e das decisões tomadas está em [ESTRUTURA.md](ESTRUTURA.md).
 
 ## Rodando o backend
 
@@ -20,6 +20,23 @@ php artisan serve
 ```
 
 A API sobe em `http://localhost:8000`. Para testar, abra `http://localhost:8000/api/products`.
+
+## Rodando o frontend
+
+Em outro terminal, com o backend ligado:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Abra `http://localhost:5173`.
+
+**Atalhos:** F2 nova venda / buscar produto · F3 consultar vendas · F4 pagamento · Enter confirmar · Esc voltar.
+
+Para testar as regras pela tela: o **Azeite** está sem estoque, e os produtos "descontinuados" estão inativos (não aparecem na busca).
 
 ## Testes automáticos
 

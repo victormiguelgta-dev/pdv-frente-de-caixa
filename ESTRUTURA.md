@@ -127,18 +127,56 @@ Cada peça tem **uma responsabilidade só**. Quando algo dá errado, você sabe 
 
 ---
 
-## Frontend (React + TypeScript) 🔜 domingo
-
-A estrutura do frontend vai ser definida a partir do layout que você vai trazer.
-A ideia geral:
+## Frontend (React + TypeScript) ✅ passo 6
 
 ```
-frontend/src/
-├── api/          funções que conversam com o backend (um lugar só para o endereço da API)
-├── components/   pedaços da tela: busca, carrinho, pagamento, comprovante
-├── hooks/        lógica reaproveitável (ex: o carrinho)
-├── types/        os "formatos" dos dados em TypeScript (Product, Sale...)
-└── utils/        funções pequenas (ex: formatar centavos em "R$ 19,90")
+frontend/
+├── src/
+│   ├── main.tsx                  ponto de entrada: liga o React e o TanStack Query
+│   ├── App.tsx                   escolhe qual tela aparece (menu, venda, consulta)
+│   ├── types.ts                  os "formatos" dos dados (Product, Sale...), iguais aos da API
+│   ├── index.css                 todo o visual: cores por função, blocos grandes, celular
+│   │
+│   ├── api/                      ÚNICO lugar que conversa com o backend
+│   │   ├── client.ts             fetch base: endereço da API, JSON, erros viram ApiError
+│   │   ├── products.ts           searchProducts()
+│   │   └── sales.ts              createSale(), getSale(), listTodaySales()
+│   │
+│   ├── screens/                  as 3 telas
+│   │   ├── HomeScreen.tsx        menu com 2 blocos grandes: Nova venda (F2), Consultar vendas (F3)
+│   │   ├── SaleScreen.tsx        busca + carrinho + pagamento + comprovante
+│   │   └── SalesScreen.tsx       buscar venda pelo número + vendas de hoje + comprovante
+│   │
+│   ├── components/               pedaços reaproveitáveis das telas
+│   │   ├── ProductSearch.tsx     busca por nome/código, leitor de código de barras, setas ↑↓
+│   │   ├── Cart.tsx              itens, quantidade (− +), remover, total, botão finalizar
+│   │   ├── PaymentDialog.tsx     forma de pagamento, valor recebido, troco / "faltam"
+│   │   ├── Receipt.tsx           comprovante (com os dados que o backend salvou)
+│   │   ├── StatusMessage.tsx     estados de carregando, erro (com "tentar de novo") e vazio
+│   │   └── Icon.tsx              ícones SVG
+│   │
+│   ├── hooks/                    lógica reaproveitável
+│   │   ├── useCart.ts            regras do carrinho (somar na mesma linha, limites, total)
+│   │   ├── useDebounce.ts        espera parar de digitar antes de buscar
+│   │   └── useHotkeys.ts         atalhos de teclado
+│   │
+│   └── utils/format.ts           centavos → "R$ 19,90", datas, máscara de dinheiro
+│
+├── .env.example                  VITE_API_URL (endereço da API)
+└── package.json                  dependências: react, react-dom, @tanstack/react-query
+```
+
+### O caminho de uma venda pelo frontend
+
+```
+Operador digita "arroz"  → useDebounce espera 300 ms → useQuery chama GET /api/products?search=arroz
+Clica no produto         → useCart.addProduct (soma 1 se já estiver no carrinho)
+Aperta F4                → abre o PaymentDialog
+Escolhe Dinheiro, R$ 60  → troco calculado na hora (prévia)
+Confirma                 → useMutation chama POST /api/sales com SÓ { product_id, quantity }
+                           ├── 201: mostra o Receipt com o que o BACKEND calculou
+                           └── 422: erro de item → linha do carrinho em vermelho
+                                    erro de valor → mensagem no campo "valor recebido"
 ```
 
 ---
@@ -231,3 +269,23 @@ Rodar: `cd backend && php artisan test`. São **26 testes**, que levam cerca de 
 | **Os testes conferem também o que NÃO aconteceu** (nada gravado, estoque intacto) | Uma venda recusada não pode deixar rastro pela metade. |
 | **Removidos os `ExampleTest` do Laravel** | Eram exemplos vazios que não testavam nada do projeto. |
 | **Validado com "sabotagem"** | Quebrei regras de propósito (aceitar inativo, troco +1 centavo) e os testes falharam, como deveriam. |
+
+## Decisões do passo 6 (frontend)
+
+| Decisão | Por quê |
+|---|---|
+| **Só o que o enunciado pede** | Buscar, carrinho, total, pagamento com troco e consultar venda (mais as vendas do dia, que ajudam a encontrar a venda a consultar). Nenhum botão sem função. |
+| **Menu com blocos grandes e uma cor por função** | Qualquer pessoa entende sem treinamento. Azul = vender, verde = pagar/troco, roxo = consultar, vermelho = erro. |
+| **Atalhos de teclado** (F2, F3, F4, Enter, Esc, setas) | Operador de caixa trabalha com teclado e leitor de código de barras. As teclas aparecem nos botões. |
+| **Leitor de código de barras**: código exato + Enter já adiciona | O leitor "digita" o código e aperta Enter sozinho. |
+| **O POST da venda envia só `product_id` e `quantity`** | O total do carrinho é só prévia. O comprovante mostra o que o backend calculou e salvou. |
+| **TanStack Query** (a única biblioteca extra) | Controla carregando, erro e cache das buscas, que o enunciado avalia. Sem ele, esse controle seria escrito à mão em cada tela. |
+| **Venda nunca é reenviada sozinha** (`mutations.retry: 0`) e o botão trava durante o envio | Evita venda duplicada por erro de rede ou duplo clique. |
+| **Erros do backend vão para o lugar certo** | `items.1.product_id` marca a 2ª linha do carrinho em vermelho; `amount_received_cents` aparece no campo do valor; rede fora → mensagem com "Tentar novamente". O carrinho nunca se perde. |
+| **Sem react-router** | São 3 telas: uma variável de estado resolve. Uma dependência a menos. |
+| **Sem Tailwind e sem biblioteca de componentes** | CSS próprio, com as cores em variáveis. Menos dependências e nada que precise de explicação extra. |
+| **`<dialog>` nativo para o pagamento** | O navegador já cuida de foco, fundo escuro e tecla Esc (acessibilidade). |
+| **Dinheiro em centavos também no front**, com `Intl.NumberFormat` | Nenhuma conta com decimal. A máscara funciona como maquininha: 6-0-0-0 = R$ 60,00. |
+| **TypeScript `strict`** | Checagem rigorosa de tipos: pega erros antes de rodar. |
+| **`.env` com `VITE_API_URL`** | O endereço da API não fica fixo no código. Só vai o endereço público, nenhum segredo. |
+| **Testado de ponta a ponta num navegador automatizado** | Busca, código de barras, quantidade, sem estoque, troco, "faltam", produto que ficou inativo, consulta, 404, API fora do ar e celular. |
