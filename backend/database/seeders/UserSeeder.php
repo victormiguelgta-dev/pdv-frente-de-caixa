@@ -12,14 +12,16 @@ use Illuminate\Database\Seeder;
 |
 | ATENÇÃO: são senhas de DEMONSTRAÇÃO. Num sistema real, cada pessoa teria a
 | própria senha, criada por ela, e este seeder não rodaria em produção.
+| (Não são "caixa123"/"gerente123" porque senhas óbvias assim aparecem em
+| listas de vazamentos: o próprio navegador avisaria para trocar.)
 */
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
         $users = [
-            ['username' => 'caixa', 'name' => 'Ana (Caixa)', 'role' => UserRole::Operator, 'password' => 'caixa123'],
-            ['username' => 'gerente', 'name' => 'Carlos (Gerente)', 'role' => UserRole::Manager, 'password' => 'gerente123'],
+            ['username' => 'caixa', 'name' => 'Ana (Caixa)', 'role' => UserRole::Operator, 'password' => 'Caixa@2026'],
+            ['username' => 'gerente', 'name' => 'Carlos (Gerente)', 'role' => UserRole::Manager, 'password' => 'Gerente@2026'],
         ];
 
         foreach ($users as $user) {

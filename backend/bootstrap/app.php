@@ -21,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'manager' => \App\Http\Middleware\EnsureUserIsManager::class,
         ]);
+
+        // Cabeçalhos de segurança em TODAS as respostas, inclusive nas de erro
+        // (ver app/Http/Middleware/SecurityHeaders.php). Fica como middleware
+        // global, e não só nas rotas da API, porque erros como o 401 (sem login)
+        // acontecem antes de chegar ao grupo de rotas e sairiam sem os cabeçalhos.
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Nas rotas /api, todo erro volta em JSON (nunca uma página HTML),

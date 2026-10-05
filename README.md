@@ -42,8 +42,8 @@ Abra `http://localhost:5173`.
 
 | Usuário | Senha | Perfil | Pode |
 |---|---|---|---|
-| `caixa` | `caixa123` | Operador de caixa | vender, consultar vendas, imprimir |
-| `gerente` | `gerente123` | Gerente | tudo do operador + cadastro de produtos |
+| `caixa` | `Caixa@2026` | Operador de caixa | vender, consultar vendas, imprimir |
+| `gerente` | `Gerente@2026` | Gerente | tudo do operador + cadastro de produtos |
 
 > São senhas de **demonstração**, criadas pelo seeder. A permissão é garantida no **backend**: o operador recebe **403** mesmo chamando a API de produtos direto.
 
@@ -56,7 +56,33 @@ cd backend
 php artisan test
 ```
 
-São 45 testes cobrindo as regras de negócio do enunciado, o cadastro de produtos, o login e as permissões. Rodam num banco em memória, sem mexer nos seus dados.
+São 49 testes cobrindo as regras de negócio do enunciado, o cadastro de produtos, o login, as permissões e as proteções de segurança. Rodam num banco em memória, sem mexer nos seus dados.
+
+## Segurança
+
+O que o projeto já faz:
+
+| Proteção | Como |
+|---|---|
+| Valor da venda garantido pelo servidor | o front envia só produto e quantidade; preço e total vêm do banco |
+| Login com token (Laravel Sanctum) | token vale 12 h; logout apaga o token no servidor; tokens vencidos são limpos diariamente |
+| Permissões no backend | cadastro de produtos só para gerente (403 para o operador, mesmo chamando a API direto) |
+| Senhas | criptografadas com bcrypt; nunca saem em nenhuma resposta |
+| Força bruta | máximo de 5 tentativas de login por minuto; mesma mensagem e mesmo tempo de resposta para "usuário não existe" e "senha errada" |
+| Abuso da API | máximo de 120 requisições por minuto por IP |
+| CORS | só o endereço do frontend (`FRONTEND_URL`) pode chamar a API pelo navegador |
+| Validação | toda entrada é validada; campos extras são descartados; consultas com parâmetros (sem SQL Injection) |
+| Cabeçalhos de segurança | `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Cache-Control: no-store` em todas as respostas, inclusive erros |
+| Segredos | `.env` fora do Git; só o `.env.example` (sem segredos) é versionado |
+| Dependências | `composer audit` e `npm audit` sem vulnerabilidades conhecidas |
+
+**Checklist para colocar em produção** (não se aplica a rodar localmente):
+- [ ] `APP_ENV=production` e `APP_DEBUG=false` no `.env` (erros sem detalhes internos)
+- [ ] HTTPS obrigatório (o token trafega no cabeçalho)
+- [ ] `FRONTEND_URL` com o domínio real do frontend
+- [ ] Criar usuários reais e **não** rodar o `UserSeeder` (as senhas dele são de demonstração)
+- [ ] Rodar o agendador (`php artisan schedule:run` no cron) para limpar tokens vencidos
+- [ ] Banco com backup (MySQL/PostgreSQL no lugar do SQLite, se houver vários caixas)
 
 ## Endpoints da API
 

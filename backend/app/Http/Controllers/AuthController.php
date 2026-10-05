@@ -35,8 +35,17 @@ class AuthController extends Controller
         | Hash::check compara a senha digitada com a senha criptografada do
         | banco. A mensagem de erro é a MESMA para "usuário não existe" e "senha
         | errada": assim quem tenta invadir não descobre quais usuários existem.
+        |
+        | Detalhe: conferir a senha é propositalmente LENTO (bcrypt). Se, quando
+        | o usuário não existe, a gente pulasse essa conferência, a resposta
+        | viria mais rápido, e medindo o tempo daria para descobrir quais
+        | usuários existem. Por isso a conferência roda SEMPRE, contra um hash
+        | qualquer quando o usuário não existe: o tempo de resposta fica igual.
         */
-        if ($user === null || ! Hash::check($request->validated('password'), $user->password)) {
+        $passwordHash = $user?->password ?? self::dummyHash();
+        $passwordOk = Hash::check($request->validated('password'), $passwordHash);
+
+        if ($user === null || ! $passwordOk) {
             throw ValidationException::withMessages([
                 'username' => 'Usuário ou senha inválidos.',
             ]);
@@ -70,6 +79,19 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Sessão encerrada.']);
+    }
+
+    /*
+    | Hash bcrypt (custo 12, o mesmo das senhas reais) de uma senha qualquer,
+    | só para igualar o tempo de resposta quando o usuário não existe (ver login).
+    | Fica pronto aqui no código: gerar um hash a cada requisição também é lento
+    | e criaria uma diferença de tempo ao contrário.
+    */
+    private const DUMMY_HASH = '$2y$12$9Ynn4JvG1ecQZyE9.zBDyOm98PBlDlYel7t0wGDtqbnt1hpnEhNwy';
+
+    private static function dummyHash(): string
+    {
+        return self::DUMMY_HASH;
     }
 
     // Só os dados do usuário que o frontend precisa (nada de senha, e-mail etc.).

@@ -21,7 +21,7 @@ Legenda: ✅ feito · 🔜 próximo passo · 💡 ideia para o futuro · 🚫 fo
 ### Bônus do teste
 | Bônus | Situação |
 |---|---|
-| ✅ Testes automatizados | 45 testes |
+| ✅ Testes automatizados | 49 testes |
 | ✅ Histórico de vendas do dia | Consultar vendas |
 | ✅ Cuidados com estoque | baixa ao vender, bloqueio sem estoque, trava para dois caixas |
 | ✅ Login/autenticação | operador e gerente (seção 2) |
@@ -32,6 +32,7 @@ Legenda: ✅ feito · 🔜 próximo passo · 💡 ideia para o futuro · 🚫 fo
 | ✅ Cadastro de produtos (criar, editar, ativar/desativar) | tela Produtos |
 | ✅ Imprimir comprovante (cupom 80 mm) | botão no comprovante |
 | ✅ Atalhos de teclado e telas de blocos grandes | todo o sistema |
+| ✅ Segurança básica (cabeçalhos, login com tempo constante, auditoria de dependências) | ver README, seção Segurança |
 
 ---
 

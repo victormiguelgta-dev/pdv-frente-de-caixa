@@ -52,7 +52,8 @@ backend/
 │       │   └── AuthController.php     ✅ passo 8  login, "quem sou eu" e logout (tokens Sanctum)
 │       │
 │       ├── Middleware/
-│       │   └── EnsureUserIsManager.php ✅ passo 8 o "porteiro": só o gerente passa (senão 403)
+│       │   ├── EnsureUserIsManager.php ✅ passo 8 o "porteiro": só o gerente passa (senão 403)
+│       │   └── SecurityHeaders.php   ✅ passo 9  cabeçalhos de segurança em todas as respostas
 │       │
 │       ├── Requests/             ✅ passo 4  O "SEGURANÇA DA PORTA": valida o que chega
 │       │   ├── LoginRequest.php      ✅ passo 8  valida o formulário de login
@@ -82,7 +83,8 @@ backend/
 │       ├── SaleTest.php          ✅          20 testes: total, troco, preço registrado, inativo, estoque...
 │       ├── ProductSearchTest.php ✅          6 testes: busca por nome, código, inativos escondidos...
 │       ├── ProductCatalogTest.php ✅ passo 7 10 testes: cadastrar, código repetido, mudar preço, desativar...
-│       └── AuthTest.php          ✅ passo 8  9 testes: login, força bruta, 401, operador × gerente, quem vendeu
+│       ├── AuthTest.php          ✅ passo 8  9 testes: login, força bruta, 401, operador × gerente, quem vendeu
+│       └── SecurityTest.php      ✅ passo 9  4 testes: cabeçalhos, erros sem detalhes, nada de senha nas respostas
 │
 ├── config/                       ✅          configurações (cors.php = quem pode chamar a API)
 ├── bootstrap/app.php             ✅          liga tudo: rotas, middlewares, erros em JSON
@@ -349,3 +351,15 @@ Toda requisição: "Authorization: Bearer <token>"
 | **A venda grava quem vendeu** (`sales.user_id`), vindo do token | O operador nunca vem de um campo enviado pelo front: ninguém registra venda no nome de outro (provado em teste). |
 | **Sem cadastro de usuários na API** | Usuários vêm do seeder. Assim ninguém consegue se "promover" a gerente pela API. |
 | **401 em qualquer tela volta ao login** com "sua sessão expirou", e o cache é limpo no logout | O próximo usuário não vê dados do anterior. |
+
+## Decisões do passo 9 (segurança básica)
+
+| Decisão | Por quê |
+|---|---|
+| **`composer audit` e `npm audit`** | Conferem se alguma biblioteca tem falha de segurança conhecida. Resultado: nenhuma. |
+| **Middleware `SecurityHeaders` global** | Cabeçalhos que mandam o navegador se proteger (`nosniff`, `X-Frame-Options`, `Referrer-Policy`, `Cache-Control: no-store`). É global porque o teste mostrou que, só no grupo da API, as respostas de erro (401) saíam sem eles. |
+| **`Cache-Control: no-store`** | Vendas e dados do usuário não ficam no cache do navegador: importante num computador de caixa compartilhado. |
+| **Login com tempo constante** (`DUMMY_HASH`) | Conferir senha é lento de propósito (bcrypt). Sem isso, "usuário não existe" respondia mais rápido e dava para descobrir usuários medindo o tempo. Medido: ~0,25 s nos dois casos. O hash fica pronto no código porque gerá-lo a cada requisição criava a diferença ao contrário. |
+| **Senhas de demonstração menos óbvias** (`Caixa@2026`, `Gerente@2026`) | `caixa123` aparece em listas de vazamento: o próprio Chrome mandava trocar. |
+| **Limpeza diária de tokens vencidos** (`routes/console.php`) | Token vencido já não funciona, mas não precisa ficar guardado no banco. |
+| **Checklist de produção no README** | `APP_DEBUG=false`, HTTPS, usuários reais etc. Fica documentado o que muda ao sair do ambiente local. |
