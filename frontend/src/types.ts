@@ -19,7 +19,11 @@ export interface Product {
   name: string
   price_cents: number
   stock: number
+  active: boolean // disponível para venda
 }
+
+// O que o frontend envia para cadastrar ou editar um produto.
+export type ProductInput = Omit<Product, 'id'>
 
 // Item de uma venda finalizada, com o preço "fotografado" no dia da venda.
 export interface SaleItem {

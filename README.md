@@ -34,7 +34,11 @@ npm run dev
 
 Abra `http://localhost:5173`.
 
-**Atalhos:** F2 nova venda / buscar produto · F3 consultar vendas · F4 pagamento · Enter confirmar · Esc voltar.
+**Atalhos:** no menu, F2 nova venda · F3 consultar vendas · F4 produtos. Na venda, F2 buscar · F4 pagamento · Enter confirmar · Esc voltar.
+
+**Imprimir:** o comprovante tem o botão "Imprimir comprovante", que imprime só o cupom (80 mm), em impressora comum, térmica ou "Salvar como PDF".
+
+> **Decisão consciente: não há login.** A tela de Produtos (cadastrar e mudar preço) fica aberta para qualquer pessoa que use o sistema. Num caixa real, ela ficaria protegida por login com perfil de gerente. É o próximo passo natural (o Laravel Sanctum já está instalado).
 
 Para testar as regras pela tela: o **Azeite** está sem estoque, e os produtos "descontinuados" estão inativos (não aparecem na busca).
 
@@ -45,7 +49,7 @@ cd backend
 php artisan test
 ```
 
-São 26 testes cobrindo todas as regras de negócio do enunciado. Rodam num banco em memória, sem mexer nos seus dados.
+São 36 testes cobrindo todas as regras de negócio do enunciado e o cadastro de produtos. Rodam num banco em memória, sem mexer nos seus dados.
 
 ## Endpoints da API
 
@@ -55,6 +59,9 @@ São 26 testes cobrindo todas as regras de negócio do enunciado. Rodam num banc
 | POST | `/api/sales` | finaliza uma venda |
 | GET | `/api/sales/{id}` | comprovante de uma venda |
 | GET | `/api/sales` | vendas do dia |
+| GET | `/api/catalog/products?search=` | cadastro: lista todos os produtos (inclusive inativos) |
+| POST | `/api/catalog/products` | cadastro: cria um produto |
+| PUT | `/api/catalog/products/{id}` | cadastro: edita nome, preço, estoque ou ativo/inativo |
 
 Exemplo de venda (o frontend envia só produto e quantidade; preços e total são calculados no backend):
 

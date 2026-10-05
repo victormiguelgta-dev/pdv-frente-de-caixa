@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { PaymentMethod } from '../types'
-import { digitsToCents, formatCents } from '../utils/format'
+import { formatCents } from '../utils/format'
 import { Icon, type IconName } from './Icon'
+import { MoneyInput } from './MoneyInput'
 
 /*
  * Janela de pagamento: escolher a forma de pagamento e, no dinheiro,
@@ -110,14 +111,11 @@ export function PaymentDialog({ totalCents, isSubmitting, errorMessage, amountEr
           <div className="cash">
             <label className="cash__field">
               <span>Valor recebido</span>
-              <input
+              {/* Os dígitos entram pela direita, como numa maquininha: 6-0-0-0 = R$ 60,00. */}
+              <MoneyInput
                 ref={amountRef}
-                type="text"
-                inputMode="numeric"
-                className="money"
-                value={formatCents(amountCents)}
-                // Os dígitos entram pela direita, como numa maquininha: 6-0-0-0 = R$ 60,00.
-                onChange={(event) => setAmountCents(digitsToCents(event.target.value))}
+                valueCents={amountCents}
+                onChangeCents={setAmountCents}
                 disabled={isSubmitting}
                 aria-invalid={missingMoney || amountError !== null}
                 aria-describedby="cash-result"

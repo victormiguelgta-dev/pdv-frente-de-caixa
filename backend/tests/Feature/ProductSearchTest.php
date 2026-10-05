@@ -65,11 +65,11 @@ class ProductSearchTest extends TestCase
     {
         Product::factory()->create();
 
-        // O Resource define o formato. Campos internos (active, datas) não saem.
+        // O Resource define o formato. Campos internos (datas) não saem.
         $this->getJson('/api/products')
             ->assertOk()
             ->assertExactJsonStructure([
-                'data' => [['id', 'code', 'name', 'price_cents', 'stock']],
+                'data' => [['id', 'code', 'name', 'price_cents', 'stock', 'active']],
             ]);
     }
 

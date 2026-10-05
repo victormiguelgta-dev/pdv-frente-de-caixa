@@ -24,6 +24,9 @@ class ProductResource extends JsonResource
             'name' => $this->name,
             'price_cents' => $this->price_cents,
             'stock' => $this->stock,
+            // Na busca do caixa vem sempre true (inativos nem aparecem); no
+            // cadastro é o que mostra "Ativo" ou "Inativo".
+            'active' => $this->active,
         ];
     }
 }

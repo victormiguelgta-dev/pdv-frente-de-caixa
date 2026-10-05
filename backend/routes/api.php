@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ProductCatalogController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
@@ -36,4 +37,10 @@ Route::middleware('throttle:120,1')->group(function () {
     // Comprovante: GET /api/sales/15
     // whereNumber: só aceita número no lugar de {sale} (/api/sales/abc dá 404).
     Route::get('/sales/{sale}', [SaleController::class, 'show'])->whereNumber('sale');
+
+    // Cadastro de produtos (tela "Produtos"). Sem rota de apagar: produto que
+    // sai de linha é desativado, para não quebrar o histórico de vendas.
+    Route::get('/catalog/products', [ProductCatalogController::class, 'index']);
+    Route::post('/catalog/products', [ProductCatalogController::class, 'store']);
+    Route::put('/catalog/products/{product}', [ProductCatalogController::class, 'update'])->whereNumber('product');
 });

@@ -5,6 +5,7 @@ import { createSale } from '../api/sales'
 import { Cart } from '../components/Cart'
 import { Icon } from '../components/Icon'
 import { PaymentDialog } from '../components/PaymentDialog'
+import { PrintButton } from '../components/PrintButton'
 import { ProductSearch } from '../components/ProductSearch'
 import { Receipt } from '../components/Receipt'
 import { useCart } from '../hooks/useCart'
@@ -172,9 +173,12 @@ export function SaleScreen({ onExit }: { onExit: () => void }) {
             <Icon name="check" size={28} /> Venda nº {finishedSale.id} finalizada com sucesso!
           </p>
           <Receipt sale={finishedSale} />
-          <button type="button" className="btn btn--primary btn--xl" onClick={startNewSale} autoFocus>
-            Nova venda <kbd>F2</kbd>
-          </button>
+          <div className="receipt-actions">
+            <PrintButton />
+            <button type="button" className="btn btn--primary btn--xl" onClick={startNewSale} autoFocus>
+              Nova venda <kbd>F2</kbd>
+            </button>
+          </div>
         </main>
       ) : (
         <main className="sale">

@@ -46,9 +46,11 @@ backend/
 │   └── Http/
 │       ├── Controllers/          ✅          C do MVC: os "garçons", recebem e repassam
 │       │   ├── ProductController.php  ✅ passo 4  busca de produtos
-│       │   └── SaleController.php     ✅ passo 4  criar venda, comprovante, vendas do dia
+│       │   ├── SaleController.php     ✅ passo 4  criar venda, comprovante, vendas do dia
+│       │   └── ProductCatalogController.php ✅ passo 7  cadastro: listar, criar, editar produto
 │       │
 │       ├── Requests/             ✅ passo 4  O "SEGURANÇA DA PORTA": valida o que chega
+│       │   ├── ProductRequest.php    ✅ passo 7  valida o cadastro (código único, preço > 0...)
 │       │   └── StoreSaleRequest.php          ex: "itens é obrigatório", "quantidade ≥ 1"
 │       │
 │       └── Resources/            ✅ passo 4  O "EMPACOTADOR": define o formato do JSON
@@ -72,7 +74,8 @@ backend/
 ├── tests/
 │   └── Feature/                  ✅ passo 5  testes automatizados de cada regra do teste
 │       ├── SaleTest.php          ✅          20 testes: total, troco, preço registrado, inativo, estoque...
-│       └── ProductSearchTest.php ✅          6 testes: busca por nome, código, inativos escondidos...
+│       ├── ProductSearchTest.php ✅          6 testes: busca por nome, código, inativos escondidos...
+│       └── ProductCatalogTest.php ✅ passo 7 10 testes: cadastrar, código repetido, mudar preço, desativar...
 │
 ├── config/                       ✅          configurações (cors.php = quem pode chamar a API)
 ├── bootstrap/app.php             ✅          liga tudo: rotas, middlewares, erros em JSON
@@ -140,18 +143,23 @@ frontend/
 │   ├── api/                      ÚNICO lugar que conversa com o backend
 │   │   ├── client.ts             fetch base: endereço da API, JSON, erros viram ApiError
 │   │   ├── products.ts           searchProducts()
+│   │   ├── catalog.ts            listCatalogProducts(), createProduct(), updateProduct()
 │   │   └── sales.ts              createSale(), getSale(), listTodaySales()
 │   │
-│   ├── screens/                  as 3 telas
-│   │   ├── HomeScreen.tsx        menu com 2 blocos grandes: Nova venda (F2), Consultar vendas (F3)
+│   ├── screens/                  as 4 telas
+│   │   ├── HomeScreen.tsx        menu com blocos grandes: Nova venda (F2), Consultar vendas (F3), Produtos (F4)
 │   │   ├── SaleScreen.tsx        busca + carrinho + pagamento + comprovante
-│   │   └── SalesScreen.tsx       buscar venda pelo número + vendas de hoje + comprovante
+│   │   ├── SalesScreen.tsx       buscar venda pelo número + vendas de hoje + comprovante
+│   │   └── ProductsScreen.tsx    cadastro de produtos: lista, busca, novo e editar (passo 7)
 │   │
 │   ├── components/               pedaços reaproveitáveis das telas
 │   │   ├── ProductSearch.tsx     busca por nome/código, leitor de código de barras, setas ↑↓
 │   │   ├── Cart.tsx              itens, quantidade (− +), remover, total, botão finalizar
 │   │   ├── PaymentDialog.tsx     forma de pagamento, valor recebido, troco / "faltam"
 │   │   ├── Receipt.tsx           comprovante (com os dados que o backend salvou)
+│   │   ├── PrintButton.tsx       imprime só o comprovante, formato cupom 80 mm (passo 7)
+│   │   ├── ProductFormDialog.tsx janela de cadastrar/editar produto (passo 7)
+│   │   ├── MoneyInput.tsx        campo de dinheiro estilo maquininha (passo 7)
 │   │   ├── StatusMessage.tsx     estados de carregando, erro (com "tentar de novo") e vazio
 │   │   └── Icon.tsx              ícones SVG
 │   │
@@ -289,3 +297,18 @@ Rodar: `cd backend && php artisan test`. São **26 testes**, que levam cerca de 
 | **TypeScript `strict`** | Checagem rigorosa de tipos: pega erros antes de rodar. |
 | **`.env` com `VITE_API_URL`** | O endereço da API não fica fixo no código. Só vai o endereço público, nenhum segredo. |
 | **Testado de ponta a ponta num navegador automatizado** | Busca, código de barras, quantidade, sem estoque, troco, "faltam", produto que ficou inativo, consulta, 404, API fora do ar e celular. |
+
+## Decisões do passo 7 (cadastro de produtos e impressão)
+
+Ideia: deixar o sistema mais próximo de um caixa de verdade, sem quebrar nenhuma regra do teste.
+
+| Decisão | Por quê |
+|---|---|
+| **Cadastro de produtos** (criar, editar nome, preço e estoque) | Num caixa real, produtos e preços mudam. O seeder continua existindo para quem avalia testar rápido. |
+| **Desativar em vez de apagar** (não existe rota DELETE) | Apagar quebraria as vendas antigas que apontam para o produto. Desativado some do caixa, mas continua no cadastro para ser reativado. |
+| **Controller separado** (`ProductCatalogController`) da busca do caixa (`ProductController`) | São usos diferentes: o caixa vê só os ativos, rápido; o cadastro vê todos e edita. Cada um com uma responsabilidade. |
+| **Uma validação para criar e editar** (`ProductRequest`) | As regras são as mesmas. Ao editar, o próprio código não conta como repetido (`unique(...)->ignore`). |
+| **Mudar o preço não altera vendas antigas** | Garantido pela "fotografia" do passo 2 e provado no teste `mudar_o_preco_nao_altera_vendas_antigas`. |
+| **Sem login, de propósito** | Foi uma escolha de escopo. Limite conhecido: qualquer pessoa no sistema pode mudar preço. Num caixa real, a tela de Produtos exigiria login de gerente (Sanctum já instalado). |
+| **Imprimir só o comprovante, em formato cupom 80 mm** | CSS de impressão (`@media print`): esconde a tela e deixa só o cupom, a largura das impressoras térmicas de caixa. Sem biblioteca: usa a impressão do navegador. |
+| **`MoneyInput`: cursor sempre no final do campo** | Encontrado no teste: clicar no meio de "R$ 7,99" e digitar trocava o valor. Agora os dígitos sempre entram pela direita, como numa maquininha. |

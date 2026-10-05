@@ -21,11 +21,11 @@ return [
     // Só as rotas da API passam pelo CORS.
     'paths' => ['api/*'],
 
-    // Métodos HTTP que o front usa: GET (buscar), POST (criar) e OPTIONS
-    // (o navegador manda um OPTIONS antes, perguntando "posso?").
-    // Não liberamos PUT/PATCH/DELETE porque a API não tem rotas de editar ou
-    // apagar venda: venda finalizada não pode ser alterada (regra do teste).
-    'allowed_methods' => ['GET', 'POST', 'OPTIONS'],
+    // Métodos HTTP que o front usa: GET (buscar), POST (criar), PUT (editar
+    // produto no cadastro) e OPTIONS (o navegador manda antes, perguntando
+    // "posso?"). DELETE não é liberado: nada é apagado no sistema.
+    // (Venda continua sem rota de editar: liberar o PUT no CORS não cria rota.)
+    'allowed_methods' => ['GET', 'POST', 'PUT', 'OPTIONS'],
 
     // Único endereço autorizado. Configurado em FRONTEND_URL no .env.
     'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],

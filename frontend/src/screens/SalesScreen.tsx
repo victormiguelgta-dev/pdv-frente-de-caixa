@@ -3,6 +3,7 @@ import { useState, type FormEvent } from 'react'
 import { ApiError } from '../api/client'
 import { getSale, listTodaySales } from '../api/sales'
 import { Icon } from '../components/Icon'
+import { PrintButton } from '../components/PrintButton'
 import { Receipt } from '../components/Receipt'
 import { EmptyState, ErrorMessage, Loading } from '../components/StatusMessage'
 import { useHotkeys } from '../hooks/useHotkeys'
@@ -127,7 +128,10 @@ export function SalesScreen({ onExit }: { onExit: () => void }) {
               <ErrorMessage message={saleQuery.error.message} onRetry={() => saleQuery.refetch()} />
             )
           ) : (
-            <Receipt sale={saleQuery.data} />
+            <div className="receipt-panel">
+              <Receipt sale={saleQuery.data} />
+              <PrintButton />
+            </div>
           )}
         </section>
       </main>

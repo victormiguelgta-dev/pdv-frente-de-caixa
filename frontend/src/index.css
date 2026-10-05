@@ -4,7 +4,7 @@
  * Princípios: simples e autoexplicativo para qualquer operador.
  *  - Blocos e botões GRANDES (fáceis de tocar numa tela touch).
  *  - Uma cor fixa por função: azul = venda, verde = pagar/sucesso,
- *    roxo = consultar, vermelho = erro/remover.
+ *    roxo = consultar, verde-azulado = produtos, vermelho = erro/remover.
  *  - Valores em dinheiro grandes, alinhados e com números de largura fixa.
  *
  * As cores ficam em variáveis (--nome) no :root: para mudar o tema, muda só aqui.
@@ -22,6 +22,7 @@
   --success: #15803d; /* verde: pagar, troco, sucesso */
   --success-soft: #dcfce7;
   --secondary: #6d28d9; /* roxo: consultar vendas */
+  --tertiary: #0f766e; /* verde-azulado: produtos */
   --danger: #b91c1c; /* vermelho: erro, falta dinheiro, remover */
   --danger-soft: #fee2e2;
 
@@ -202,6 +203,21 @@ kbd {
   background: var(--secondary);
 }
 
+.tile--tertiary {
+  background: var(--tertiary);
+}
+
+/* Coluna da direita do menu: dois blocos empilhados. */
+.home__side {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.home__side .tile__title {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+}
+
 .tile__title {
   font-size: clamp(1.75rem, 4vw, 3rem);
   font-weight: 800;
@@ -239,6 +255,10 @@ kbd {
 
 .topbar h1 {
   font-size: 1.4rem;
+}
+
+.topbar__action {
+  margin-left: auto; /* empurra o botão para a direita */
 }
 
 .panel {
@@ -392,6 +412,26 @@ kbd {
 .tag--danger {
   background: var(--danger-soft);
   color: var(--danger);
+}
+
+.tag--success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.tag--muted {
+  background: var(--border);
+  color: var(--muted);
+}
+
+/* Texto só para leitores de tela (invisível na tela). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* Carrinho */
@@ -909,6 +949,144 @@ kbd {
   color: var(--muted);
 }
 
+/* ---------- Ações do comprovante ---------- */
+
+.receipt-actions {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+}
+
+.receipt-panel {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+}
+
+.receipt-panel .receipt {
+  width: 100%;
+}
+
+/* ---------- Cadastro de produtos ---------- */
+
+.catalog {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 1.25rem;
+}
+
+.catalog .panel {
+  flex: 1;
+  min-width: 0; /* deixa a tabela rolar dentro do painel em telas estreitas */
+}
+
+.catalog__list {
+  flex: 1;
+  min-height: 0;
+  margin-top: 1rem;
+  overflow: auto;
+}
+
+.success--small {
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+}
+
+.catalog-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.catalog-table th {
+  position: sticky; /* cabeçalho fica parado ao rolar a lista */
+  top: 0;
+  padding: 0.5rem;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.catalog-table td {
+  padding: 0.6rem 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.catalog-table td small {
+  display: block;
+  color: var(--muted);
+}
+
+.catalog-table .num {
+  text-align: right;
+}
+
+.catalog-table .is-inactive td {
+  color: var(--muted);
+}
+
+/* Formulário de produto */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.field input {
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  padding: 0 0.9rem;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 1.1rem;
+}
+
+.field input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.field--error input {
+  border-color: var(--danger);
+}
+
+.field .money {
+  text-align: right;
+}
+
+.switch {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.switch input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--success);
+}
+
 /* ---------- Telas menores (tablet e celular): uma coluna ---------- */
 
 /* Itens de grid podem encolher abaixo da largura do conteúdo (sem isso, um
@@ -922,10 +1100,28 @@ kbd {
 @media (max-width: 900px) {
   .home,
   .sale,
-  .sales {
+  .sales,
+  .form-grid {
     grid-template-columns: minmax(0, 1fr);
     padding: 0.75rem;
     gap: 0.75rem;
+  }
+
+  .topbar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .catalog {
+    padding: 0.75rem;
+  }
+
+  /* Na tabela de produtos, esconde a coluna "Situação" (o inativo já
+     aparece em cinza) para caber na tela do celular. */
+  .catalog-table th:nth-child(4),
+  .catalog-table td:nth-child(4) {
+    display: none;
   }
 
   /* Sem teclado físico no celular: as dicas de tecla só ocupariam espaço. */
@@ -975,5 +1171,47 @@ kbd {
 
   .product__name {
     font-size: 1rem;
+  }
+}
+
+/* ---------- Impressão do comprovante ----------
+ * Ao imprimir, esconde a tela inteira e mostra SÓ o comprovante, com a
+ * largura de um cupom de impressora térmica de caixa (80 mm), em preto e branco.
+ * (visibility, e não display: assim o comprovante aparece mesmo estando
+ * dentro de partes da tela que ficaram escondidas.)
+ */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 4mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .receipt,
+  .receipt * {
+    visibility: visible;
+    color: #000 !important;
+  }
+
+  .receipt {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 72mm;
+    padding: 0;
+    border: none;
+    font-size: 11px;
+  }
+
+  .receipt__header {
+    flex-direction: column;
+    gap: 0.25rem;
   }
 }
