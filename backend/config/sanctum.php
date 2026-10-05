@@ -50,7 +50,10 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Validade do token de login, em minutos. 720 = 12 horas, o tamanho de um
+    // turno longo de caixa. Depois disso o operador precisa entrar de novo.
+    // (null, o padrão, faria o token valer para sempre: mais arriscado.)
+    'expiration' => env('SANCTUM_EXPIRATION', 720),
 
     /*
     |--------------------------------------------------------------------------

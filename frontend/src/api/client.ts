@@ -13,6 +13,27 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000/api'
 
 /*
+ * Token de login (Sanctum). Guardado aqui, na memória, e enviado em toda
+ * requisição no cabeçalho "Authorization: Bearer <token>".
+ * Quem define é a sessão (src/session.ts), no login e ao abrir o sistema.
+ */
+let authToken: string | null = null
+
+export function setAuthToken(token: string | null) {
+  authToken = token
+}
+
+/*
+ * O que fazer quando a API responder 401 (token expirado ou inválido):
+ * a sessão registra aqui uma função que volta para a tela de login.
+ */
+let onUnauthorized: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler
+}
+
+/*
  * Erro padronizado da API.
  *  - status: código HTTP (422, 404...). 0 quando nem chegou ao servidor (rede).
  *  - message: mensagem pronta para mostrar ao operador.
@@ -38,12 +59,21 @@ const UNEXPECTED_ERROR_MESSAGE = 'Ocorreu um erro inesperado. Tente novamente.'
 
 /*
  * Faz uma requisição e devolve o campo "data" da resposta (o Laravel
- * embrulha todas as respostas de sucesso em { "data": ... }).
+ * embrulha as respostas dos Resources em { "data": ... }).
  *
  * <T> é um "tipo genérico": quem chama diz o que espera receber, ex:
  * request<Product[]>('/products') devolve uma lista de Product.
  */
 export async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const body = await requestJson<{ data: T }>(path, options)
+  return body.data
+}
+
+/*
+ * Faz uma requisição e devolve o corpo inteiro da resposta (usado no login,
+ * que não vem dentro de "data"). Toda a parte de erro fica aqui.
+ */
+export async function requestJson<T>(path: string, options: RequestInit = {}): Promise<T> {
   let response: Response
 
   try {
@@ -53,6 +83,8 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
         // Accept: pedimos resposta em JSON, inclusive nos erros.
         Accept: 'application/json',
         'Content-Type': 'application/json',
+        // Só envia o token se houver alguém logado.
+        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
         ...options.headers,
       },
     })
@@ -66,6 +98,11 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
   // web), segue com null em vez de quebrar a tela.
   const body: unknown = await response.json().catch(() => null)
 
+  // 401 com alguém logado = o token venceu ou foi invalidado: volta ao login.
+  if (response.status === 401 && authToken) {
+    onUnauthorized?.()
+  }
+
   if (!response.ok) {
     const errorBody = (body ?? {}) as { message?: string; errors?: Record<string, string[]> }
 
@@ -77,5 +114,5 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     throw new ApiError(response.status, message, errorBody.errors ?? {})
   }
 
-  return (body as { data: T }).data
+  return body as T
 }

@@ -6,12 +6,13 @@ use App\Enums\PaymentMethod;
 use App\Models\Concerns\Immutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /*
 | Model Sale = uma venda finalizada (tabela "sales").
 */
-#[Fillable(['payment_method', 'total_cents', 'amount_received_cents', 'change_cents'])]
+#[Fillable(['user_id', 'payment_method', 'total_cents', 'amount_received_cents', 'change_cents'])]
 class Sale extends Model
 {
     // Venda finalizada não pode ser alterada nem apagada (ver Concerns/Immutable.php).
@@ -38,5 +39,11 @@ class Sale extends Model
     public function items(): HasMany
     {
         return $this->hasMany(SaleItem::class);
+    }
+
+    // A venda PERTENCE AO operador que a fez (quem estava logado).
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

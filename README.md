@@ -38,7 +38,14 @@ Abra `http://localhost:5173`.
 
 **Imprimir:** o comprovante tem o botão "Imprimir comprovante", que imprime só o cupom (80 mm), em impressora comum, térmica ou "Salvar como PDF".
 
-> **Decisão consciente: não há login.** A tela de Produtos (cadastrar e mudar preço) fica aberta para qualquer pessoa que use o sistema. Num caixa real, ela ficaria protegida por login com perfil de gerente. É o próximo passo natural (o Laravel Sanctum já está instalado).
+### Usuários de exemplo
+
+| Usuário | Senha | Perfil | Pode |
+|---|---|---|---|
+| `caixa` | `caixa123` | Operador de caixa | vender, consultar vendas, imprimir |
+| `gerente` | `gerente123` | Gerente | tudo do operador + cadastro de produtos |
+
+> São senhas de **demonstração**, criadas pelo seeder. A permissão é garantida no **backend**: o operador recebe **403** mesmo chamando a API de produtos direto.
 
 Para testar as regras pela tela: o **Azeite** está sem estoque, e os produtos "descontinuados" estão inativos (não aparecem na busca).
 
@@ -49,19 +56,24 @@ cd backend
 php artisan test
 ```
 
-São 36 testes cobrindo todas as regras de negócio do enunciado e o cadastro de produtos. Rodam num banco em memória, sem mexer nos seus dados.
+São 45 testes cobrindo as regras de negócio do enunciado, o cadastro de produtos, o login e as permissões. Rodam num banco em memória, sem mexer nos seus dados.
 
 ## Endpoints da API
 
+Todas as rotas, menos o login, exigem o token no cabeçalho `Authorization: Bearer <token>`.
+
 | Método | Endereço | O que faz |
 |---|---|---|
+| POST | `/api/login` | entra com `username` e `password` e devolve o token (máx. 5 tentativas por minuto) |
+| GET | `/api/me` | usuário logado |
+| POST | `/api/logout` | sai (apaga o token) |
 | GET | `/api/products?search=arroz` | busca produtos disponíveis por nome ou código (máx. 20) |
 | POST | `/api/sales` | finaliza uma venda |
 | GET | `/api/sales/{id}` | comprovante de uma venda |
 | GET | `/api/sales` | vendas do dia |
-| GET | `/api/catalog/products?search=` | cadastro: lista todos os produtos (inclusive inativos) |
-| POST | `/api/catalog/products` | cadastro: cria um produto |
-| PUT | `/api/catalog/products/{id}` | cadastro: edita nome, preço, estoque ou ativo/inativo |
+| GET | `/api/catalog/products?search=` | **só gerente** · cadastro: lista todos os produtos (inclusive inativos) |
+| POST | `/api/catalog/products` | **só gerente** · cadastro: cria um produto |
+| PUT | `/api/catalog/products/{id}` | **só gerente** · cadastro: edita nome, preço, estoque ou ativo/inativo |
 
 Exemplo de venda (o frontend envia só produto e quantidade; preços e total são calculados no backend):
 

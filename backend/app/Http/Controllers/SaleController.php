@@ -28,6 +28,7 @@ class SaleController extends Controller
     {
         $sales = Sale::query()
             ->whereDate('created_at', today())
+            ->with('user')        // o operador de cada venda
             ->withCount('items')  // só a quantidade de itens, não a lista (mais leve)
             // Da mais nova para a mais antiga. Ordenamos pelo id (e não pela
             // hora) porque duas vendas no mesmo segundo empatariam na hora,
@@ -56,6 +57,9 @@ class SaleController extends Controller
             items: $data['items'],
             paymentMethod: PaymentMethod::from($data['payment_method']),
             amountReceivedCents: $data['amount_received_cents'] ?? null,
+            // O operador vem do LOGIN (token), nunca de um campo enviado pelo
+            // frontend: assim ninguém consegue registrar venda no nome de outro.
+            operator: $request->user(),
         );
 
         // 201 Created = o código HTTP para "criei um registro novo".
@@ -71,6 +75,6 @@ class SaleController extends Controller
     */
     public function show(Sale $sale): SaleResource
     {
-        return SaleResource::make($sale->load('items'));
+        return SaleResource::make($sale->load(['items', 'user']));
     }
 }

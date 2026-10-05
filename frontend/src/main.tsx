@@ -3,6 +3,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { SessionProvider } from './session'
 
 /*
  * Ponto de entrada do frontend: liga o React à página (index.html).
@@ -26,7 +27,10 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      {/* SessionProvider: deixa o usuário logado disponível para todas as telas. */}
+      <SessionProvider>
+        <App />
+      </SessionProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

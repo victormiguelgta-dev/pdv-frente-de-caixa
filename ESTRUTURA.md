@@ -29,7 +29,8 @@ e encontra tudo. Cada parte fica na sua pasta e roda de forma independente.
 backend/
 ├── app/                          ← O CÓDIGO DO SISTEMA (é aqui que mais trabalhamos)
 │   ├── Enums/                    ✅ passo 2  Listas fixas de opções
-│   │   └── PaymentMethod.php     ✅          dinheiro, débito, crédito, pix
+│   │   ├── PaymentMethod.php     ✅          dinheiro, débito, crédito, pix
+│   │   └── UserRole.php          ✅ passo 8  perfis: operador de caixa e gerente
 │   │
 │   ├── Models/                   ✅          M do MVC: a "despensa", uma classe por tabela
 │   │   ├── Concerns/
@@ -47,9 +48,14 @@ backend/
 │       ├── Controllers/          ✅          C do MVC: os "garçons", recebem e repassam
 │       │   ├── ProductController.php  ✅ passo 4  busca de produtos
 │       │   ├── SaleController.php     ✅ passo 4  criar venda, comprovante, vendas do dia
-│       │   └── ProductCatalogController.php ✅ passo 7  cadastro: listar, criar, editar produto
+│       │   ├── ProductCatalogController.php ✅ passo 7  cadastro: listar, criar, editar produto
+│       │   └── AuthController.php     ✅ passo 8  login, "quem sou eu" e logout (tokens Sanctum)
+│       │
+│       ├── Middleware/
+│       │   └── EnsureUserIsManager.php ✅ passo 8 o "porteiro": só o gerente passa (senão 403)
 │       │
 │       ├── Requests/             ✅ passo 4  O "SEGURANÇA DA PORTA": valida o que chega
+│       │   ├── LoginRequest.php      ✅ passo 8  valida o formulário de login
 │       │   ├── ProductRequest.php    ✅ passo 7  valida o cadastro (código único, preço > 0...)
 │       │   └── StoreSaleRequest.php          ex: "itens é obrigatório", "quantidade ≥ 1"
 │       │
@@ -75,7 +81,8 @@ backend/
 │   └── Feature/                  ✅ passo 5  testes automatizados de cada regra do teste
 │       ├── SaleTest.php          ✅          20 testes: total, troco, preço registrado, inativo, estoque...
 │       ├── ProductSearchTest.php ✅          6 testes: busca por nome, código, inativos escondidos...
-│       └── ProductCatalogTest.php ✅ passo 7 10 testes: cadastrar, código repetido, mudar preço, desativar...
+│       ├── ProductCatalogTest.php ✅ passo 7 10 testes: cadastrar, código repetido, mudar preço, desativar...
+│       └── AuthTest.php          ✅ passo 8  9 testes: login, força bruta, 401, operador × gerente, quem vendeu
 │
 ├── config/                       ✅          configurações (cors.php = quem pode chamar a API)
 ├── bootstrap/app.php             ✅          liga tudo: rotas, middlewares, erros em JSON
@@ -136,7 +143,8 @@ Cada peça tem **uma responsabilidade só**. Quando algo dá errado, você sabe 
 frontend/
 ├── src/
 │   ├── main.tsx                  ponto de entrada: liga o React e o TanStack Query
-│   ├── App.tsx                   escolhe qual tela aparece (menu, venda, consulta)
+│   ├── App.tsx                   escolhe qual tela aparece (login, menu, venda, consulta, produtos)
+│   ├── session.tsx               quem está logado: login, logout, token (passo 8)
 │   ├── types.ts                  os "formatos" dos dados (Product, Sale...), iguais aos da API
 │   ├── index.css                 todo o visual: cores por função, blocos grandes, celular
 │   │
@@ -144,13 +152,15 @@ frontend/
 │   │   ├── client.ts             fetch base: endereço da API, JSON, erros viram ApiError
 │   │   ├── products.ts           searchProducts()
 │   │   ├── catalog.ts            listCatalogProducts(), createProduct(), updateProduct()
+│   │   ├── auth.ts               login(), fetchMe(), logout() (passo 8)
 │   │   └── sales.ts              createSale(), getSale(), listTodaySales()
 │   │
-│   ├── screens/                  as 4 telas
+│   ├── screens/                  as 5 telas
 │   │   ├── HomeScreen.tsx        menu com blocos grandes: Nova venda (F2), Consultar vendas (F3), Produtos (F4)
 │   │   ├── SaleScreen.tsx        busca + carrinho + pagamento + comprovante
 │   │   ├── SalesScreen.tsx       buscar venda pelo número + vendas de hoje + comprovante
-│   │   └── ProductsScreen.tsx    cadastro de produtos: lista, busca, novo e editar (passo 7)
+│   │   ├── ProductsScreen.tsx    cadastro de produtos: lista, busca, novo e editar (passo 7)
+│   │   └── LoginScreen.tsx       tela de login (passo 8)
 │   │
 │   ├── components/               pedaços reaproveitáveis das telas
 │   │   ├── ProductSearch.tsx     busca por nome/código, leitor de código de barras, setas ↑↓
@@ -312,3 +322,30 @@ Ideia: deixar o sistema mais próximo de um caixa de verdade, sem quebrar nenhum
 | **Sem login, de propósito** | Foi uma escolha de escopo. Limite conhecido: qualquer pessoa no sistema pode mudar preço. Num caixa real, a tela de Produtos exigiria login de gerente (Sanctum já instalado). |
 | **Imprimir só o comprovante, em formato cupom 80 mm** | CSS de impressão (`@media print`): esconde a tela e deixa só o cupom, a largura das impressoras térmicas de caixa. Sem biblioteca: usa a impressão do navegador. |
 | **`MoneyInput`: cursor sempre no final do campo** | Encontrado no teste: clicar no meio de "R$ 7,99" e digitar trocava o valor. Agora os dígitos sempre entram pela direita, como numa maquininha. |
+
+## Decisões do passo 8 (login e perfis)
+
+```
+Tela de login ──POST /api/login (usuário + senha)──► AuthController
+                                                     confere a senha (Hash::check)
+              ◄──────────── token + dados do usuário ┘
+Toda requisição: "Authorization: Bearer <token>"
+      │
+      ├── auth:sanctum ........ sem token válido → 401 → volta ao login
+      └── manager (só Produtos) operador → 403 "Apenas o gerente..."
+```
+
+| Decisão | Por quê |
+|---|---|
+| **Dois perfis: operador e gerente** (`UserRole`) | Num caixa real, quem opera o caixa não muda preço nem estoque. |
+| **Permissão no backend** (middleware `EnsureUserIsManager`), e não só esconder o botão | Esconder o botão não é segurança: qualquer um pode chamar a API pelo navegador. O teste `operador_vende_mas_nao_acessa_o_cadastro_de_produtos` prova o 403. |
+| **Login por usuário curto** (`caixa`, `gerente`) e não por e-mail | Mais rápido de digitar no caixa; é o padrão em PDV. |
+| **Tokens do Laravel Sanctum** (já vinha instalado) | Simples para API + SPA: o front guarda o token e envia no cabeçalho. No banco fica só o hash do token. |
+| **Token vale 12 horas** (`sanctum.expiration`) | Um turno de caixa. O padrão do Sanctum é "para sempre", mais arriscado. |
+| **Mesma mensagem para "usuário não existe" e "senha errada"** | Quem tenta invadir não descobre quais usuários existem. |
+| **Máximo de 5 tentativas de login por minuto** | Proteção contra força bruta (testar milhares de senhas). |
+| **Logout apaga o token no backend** | O token deixa de valer na hora, não só some do navegador. |
+| **Token no `sessionStorage`** | Sobrevive ao F5, mas some ao fechar o navegador: o caixa não fica logado à toa. Não usa cookie, então não sofre CSRF. Alternativa mais forte (num sistema maior): cookie httpOnly com o modo SPA do Sanctum. |
+| **A venda grava quem vendeu** (`sales.user_id`), vindo do token | O operador nunca vem de um campo enviado pelo front: ninguém registra venda no nome de outro (provado em teste). |
+| **Sem cadastro de usuários na API** | Usuários vêm do seeder. Assim ninguém consegue se "promover" a gerente pela API. |
+| **401 em qualquer tela volta ao login** com "sua sessão expirou", e o cache é limpo no logout | O próximo usuário não vê dados do anterior. |

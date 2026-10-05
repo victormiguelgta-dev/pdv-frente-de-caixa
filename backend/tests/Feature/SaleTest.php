@@ -27,6 +27,13 @@ class SaleTest extends TestCase
 {
     use RefreshDatabase;
 
+    // Todos os testes daqui rodam com um operador de caixa logado.
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->actingAsOperator();
+    }
+
     // ------------------------------------------------------------------
     // Regra: "o total e os subtotais são confiáveis"
     // ------------------------------------------------------------------

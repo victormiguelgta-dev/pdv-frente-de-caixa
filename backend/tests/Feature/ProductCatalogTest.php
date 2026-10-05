@@ -14,6 +14,13 @@ class ProductCatalogTest extends TestCase
 {
     use RefreshDatabase;
 
+    // Cadastro de produtos é só do gerente: os testes daqui rodam com um gerente logado.
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->actingAsManager();
+    }
+
     // Dados de um produto válido, reaproveitados nos testes.
     private function validProduct(array $overrides = []): array
     {

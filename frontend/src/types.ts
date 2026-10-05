@@ -43,6 +43,7 @@ export interface Sale {
   total_cents: number
   amount_received_cents: number | null
   change_cents: number
+  operator_name?: string | null // quem vendeu (null nas vendas antigas, sem login)
   created_at: string // data/hora no formato ISO 8601
   items?: SaleItem[] // vem no comprovante
   items_count?: number // vem na lista de vendas do dia
@@ -60,4 +61,16 @@ export interface CreateSalePayload {
 export interface CartItem {
   product: Product
   quantity: number
+}
+
+// Perfis: operador de caixa (vende) e gerente (vende + cadastra produtos).
+export type UserRole = 'operator' | 'manager'
+
+// Usuário logado, como vem de POST /api/login e GET /api/me.
+export interface User {
+  id: number
+  name: string
+  username: string
+  role: UserRole
+  role_label: string
 }

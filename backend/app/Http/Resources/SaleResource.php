@@ -21,6 +21,8 @@ class SaleResource extends JsonResource
             'total_cents' => $this->total_cents,
             'amount_received_cents' => $this->amount_received_cents,
             'change_cents' => $this->change_cents,
+            // Nome de quem vendeu. null nas vendas feitas antes do login existir.
+            'operator_name' => $this->whenLoaded('user', fn () => $this->user?->name),
             // Data e hora no formato padrão ISO 8601 (ex: 2026-10-03T21:15:00-03:00).
             // O frontend converte para "03/10/2026 21:15".
             'created_at' => $this->created_at->toIso8601String(),

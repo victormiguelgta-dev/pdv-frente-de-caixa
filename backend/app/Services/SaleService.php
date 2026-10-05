@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentMethod;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -33,10 +34,11 @@ class SaleService
      *
      * @param  array<int, array{product_id: int, quantity: int}>  $items  já validados pelo StoreSaleRequest
      * @param  int|null  $amountReceivedCents  só no dinheiro
+     * @param  User  $operator  quem está fazendo a venda (o usuário logado)
      *
      * @throws ValidationException quando alguma regra é violada (vira resposta 422 com a mensagem)
      */
-    public function finalize(array $items, PaymentMethod $paymentMethod, ?int $amountReceivedCents): Sale
+    public function finalize(array $items, PaymentMethod $paymentMethod, ?int $amountReceivedCents, User $operator): Sale
     {
         /*
         | DB::transaction = "tudo ou nada". Salvar uma venda mexe em 3 tabelas
@@ -44,7 +46,7 @@ class SaleService
         | caminho, o banco desfaz tudo o que já tinha sido feito. Nunca fica
         | uma venda sem itens ou um estoque baixado sem venda.
         */
-        return DB::transaction(function () use ($items, $paymentMethod, $amountReceivedCents) {
+        return DB::transaction(function () use ($items, $paymentMethod, $amountReceivedCents, $operator) {
             /*
             | Busca TODOS os produtos da venda numa consulta só (em vez de uma
             | por item). keyBy('id') transforma a lista num "dicionário", para
@@ -146,6 +148,7 @@ class SaleService
 
             // Tudo certo: grava a venda...
             $sale = Sale::create([
+                'user_id' => $operator->id, // quem vendeu
                 'payment_method' => $paymentMethod,
                 'total_cents' => $totalCents,
                 'amount_received_cents' => $amountReceivedCents,
@@ -159,7 +162,7 @@ class SaleService
             }
 
             // Devolve a venda já com os itens carregados (para o comprovante).
-            return $sale->load('items');
+            return $sale->load(['items', 'user']);
         });
     }
 

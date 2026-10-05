@@ -55,6 +55,13 @@ export function Receipt({ sale }: { sale: Sale }) {
           <dt>Pagamento</dt>
           <dd>{sale.payment_method_label}</dd>
         </div>
+        {/* Quem vendeu (vendas antigas, de antes do login, não têm). */}
+        {sale.operator_name && (
+          <div>
+            <dt>Operador</dt>
+            <dd>{sale.operator_name}</dd>
+          </div>
+        )}
         {/* Valor recebido e troco só existem no pagamento em dinheiro. */}
         {sale.amount_received_cents !== null && (
           <>

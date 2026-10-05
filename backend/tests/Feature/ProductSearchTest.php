@@ -14,6 +14,13 @@ class ProductSearchTest extends TestCase
 {
     use RefreshDatabase;
 
+    // Todos os testes daqui rodam com um operador de caixa logado.
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->actingAsOperator();
+    }
+
     #[Test]
     public function busca_por_parte_do_nome(): void
     {
